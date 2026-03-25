@@ -336,8 +336,6 @@ export class Logger extends EventEmitter {
       return;
     }
 
-    const timestamp = new Date();
-
     let finalMetadata: Record<string, any> | undefined;
     const contextKeys = this._contextKeys;
     const hasMetadata = metadata !== undefined && this.hasOwnKeys(metadata);
@@ -353,6 +351,9 @@ export class Logger extends EventEmitter {
     if (finalMetadata !== undefined && this.redactor) {
       finalMetadata = this.redactor.redact(finalMetadata) as Record<string, any>;
     }
+
+    // Defer timestamp creation until after level check and metadata processing
+    const timestamp = new Date();
 
     const logData: LogData = {
       level,
