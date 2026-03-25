@@ -11,6 +11,8 @@ class DefaultOTelProvider implements OTelContextProvider {
     this.checked = true;
     
     try {
+      // Dynamic require for optional peer dependency
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       this.otelApi = require('@opentelemetry/api');
     } catch {
       this.otelApi = null;
@@ -65,6 +67,7 @@ class DefaultOTelProvider implements OTelContextProvider {
         }
       }
     } catch {
+      // Baggage retrieval is optional - ignore failures silently
     }
 
     return result;
