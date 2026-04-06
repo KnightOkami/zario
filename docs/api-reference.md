@@ -4,7 +4,7 @@ This page provides a detailed reference for the core classes and methods in Zari
 
 ## `Logger` Class
 
-The primary class for creating loggers. Extends `EventEmitter` to provide error event notification for transport, aggregator, and enricher failures.
+The primary class for creating loggers. Provides error event notification via `onError()` for transport, aggregator, and enricher failures.
 
 ### Constructor
 `new Logger(options?: LoggerOptions)`
@@ -22,12 +22,20 @@ Overrides environment-based default transport selection.
 Factory used when `retryOptions` is provided on `LoggerOptions`.
 Root `zario` import configures this automatically.
 
-### Events
+### Error Handling
 
-#### `'error'`
-Emitted when an error occurs in the logging pipeline (transports, aggregators, or enrichers).
-- **Payload**: `{ type: string, error: Error }`
+#### `onError(handler: (event: { type: string; error: unknown }) => void): void`
+Registers a callback for errors in the logging pipeline (transports, aggregators, or enrichers).
+- **Payload**: `{ type: string, error: unknown }`
 - **Types**: `'transport'`, `'aggregator'`, `'enricher'`
+
+```typescript
+logger.onError(({ type, error }) => {
+  console.error(`Error in ${type}:`, error);
+});
+```
+
+The `Logger` no longer extends `EventEmitter`, reducing per-instance overhead.
 
 
 ### Logging Methods

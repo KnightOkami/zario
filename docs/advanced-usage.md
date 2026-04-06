@@ -77,23 +77,19 @@ const logger = new Logger({
 });
 ```
 
-## Error Handling via Events
+## Error Handling
 
-The `Logger` class extends `EventEmitter`, allowing you to listen for internal errors in the logging pipeline. This is crucial for monitoring the health of your transports and aggregators.
+Use `logger.onError()` to register a callback for errors in the logging pipeline. This replaces the previous EventEmitter-based approach for lower per-instance overhead.
 
 ```typescript
-logger.on('error', ({ type, error }) => {
-  console.error(`Error in ${type}:`, error.message);
-  
-  if (type === 'transport') {
-    // Handle transport failures (e.g., notify DevOps)
-  }
+logger.onError(({ type, error }) => {
+  console.error(`Error in ${type}:`, error);
 });
 ```
 
-The error event payload contains:
+The error payload contains:
 - `type`: One of `'transport'`, `'aggregator'`, or `'enricher'`.
-- `error`: The original `Error` object.
+- `error`: The error that occurred.
 
 ## Asynchronous Mode
 
