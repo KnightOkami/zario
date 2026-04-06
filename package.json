@@ -2,37 +2,37 @@
   "name": "zario",
   "version": "0.5.0",
   "description": "Fast and simple logging library for TypeScript.",
-  "main": "./dist/cjs/index.js",
-  "module": "./dist/esm/index.js",
-  "types": "./dist/esm/index.d.ts",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/esm/index.d.ts",
-      "import": "./dist/esm/index.js",
-      "require": "./dist/cjs/index.js"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
     },
     "./logger": {
-      "types": "./dist/esm/logger.d.ts",
-      "import": "./dist/esm/logger.js",
-      "require": "./dist/cjs/logger.js"
+      "types": "./dist/logger.d.ts",
+      "import": "./dist/logger.js",
+      "require": "./dist/logger.cjs"
     },
     "./core/*": {
-      "types": "./dist/esm/core/*.d.ts",
-      "import": "./dist/esm/core/*.js",
-      "require": "./dist/cjs/core/*.js"
+      "types": "./dist/core/*.d.ts",
+      "import": "./dist/core/*.js",
+      "require": "./dist/core/*.cjs"
     },
     "./transports/*": {
-      "types": "./dist/esm/transports/*.d.ts",
-      "import": "./dist/esm/transports/*.js",
-      "require": "./dist/cjs/transports/*.js"
+      "types": "./dist/transports/*.d.ts",
+      "import": "./dist/transports/*.js",
+      "require": "./dist/transports/*.cjs"
     }
   },
   "scripts": {
-    "build": "node -e \"require('fs').rmSync('dist', {recursive:true, force:true})\" && tsc -p tsconfig.json && tsc -p tsconfig.cjs.json && node -e \"require('fs').writeFileSync('dist/cjs/package.json', '{\\\"type\\\":\\\"commonjs\\\"}')\"",
-    "dev": "tsc --watch",
+    "build": "tsup",
+    "dev": "tsup --watch",
     "test": "jest",
     "lint": "eslint src benchmarks --ext .ts --max-warnings=0",
-    "prepublishOnly": "bun run build"
+    "prepublishOnly": "npm run build"
   },
   "repository": {
     "type": "git",
@@ -44,7 +44,7 @@
   },
   "keywords": [
     "logging",
-    "logger", 
+    "logger",
     "console",
     "terminal",
     "typescript",
@@ -82,6 +82,7 @@
     "globals": "^16.5.0",
     "jest": "^30.2.0",
     "ts-jest": "^29.4.5",
+    "tsup": "^8.5.1",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.49.0"
   },
