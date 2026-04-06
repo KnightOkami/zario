@@ -1,9 +1,10 @@
-name: Publish Package
+name: Publish to npm
 
 on:
-  release:
-    types:
-      - created
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -13,62 +14,27 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  verify:
-    name: Verify Release Build
-    runs-on: ubuntu-latest
-    timeout-minutes: 25
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: 1.3.6
-
-      - name: Cache Bun dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.bun/install/cache
-            node_modules
-          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock', 'package.json') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Lint
-        run: bun run lint
-
-      - name: Test
-        run: bun test
-
-      - name: Build
-        run: bun run build
-
   publish:
     name: Publish to npm
-    needs: verify
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          bun-version: 1.3.6
+          node-version: 22
+          registry-url: "https://registry.npmjs.org"
 
       - name: Install dependencies
-        run: bun install --frozen-lockfile
+        run: npm ci
 
       - name: Build
-        run: bun run build
+        run: npm run build
 
-      - name: Publish package
-        run: bun publish
+      - name: Publish
+        run: npm publish
         env:
-          NPM_CONFIG_TOKEN: ${{ secrets.npm_token }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

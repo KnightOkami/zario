@@ -1,0 +1,76 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version bump type (patch, minor, major)"
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+        default: patch
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Bump, Tag, Publish, Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npx tsc -p tsconfig.json --noEmit
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Bump version
+        id: bump
+        run: |
+          npm version ${{ github.event.inputs.version }} -m "release: v%s"
+          echo "NEW_VERSION=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Push tag
+        run: git push origin main --follow-tags
+
+      - name: Publish to npm
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.bump.outputs.NEW_VERSION }}
+          name: v${{ steps.bump.outputs.NEW_VERSION }}
+          generate_release_notes: true
+          draft: false
