@@ -13,7 +13,7 @@ The benchmarks were conducted on the following hardware and software stack:
 - **OS**: Ubuntu 24.04 (Linux 6.14.0-29-generic)
 - **CPU**: Intel Core i3-8130U @ 2.20GHz (2 cores, 4 threads)
 - **RAM**: 8GB DDR4
-- **Runtime**: Bun 1.3.6 / Node.js v24.13.0
+- **Runtime**: Node.js v24.13.0
 - **Output**: All outputs directed to `/dev/null` to measure pure CPU overhead.
 
 ## Methodology
@@ -32,84 +32,84 @@ To ensure accurate and fair results, the following methodology was used:
 
 | Library | ops/sec | ns/op |
 |---------|---------|-------|
-| **Zario** | **1,850,320** | **540** |
-| Winston | 204,144 | 4,899 |
-| Pino | 195,237 | 5,122 |
-| Bunyan | 137,437 | 7,276 |
-| Log4js | 96,451 | 10,368 |
+| **Zario** | **2,348,910** | **426** |
+| Bunyan | 247,597 | 4,039 |
+| Pino | 220,167 | 4,542 |
+| Log4js | 190,691 | 5,244 |
+| Winston | 155,386 | 6,436 |
 
 ### With Metadata
 *Test: `logger.info("msg", { user, action, ip })`*
 
 | Library | ops/sec | ns/op |
 |---------|---------|-------|
-| **Zario** | **1,806,907** | **553** |
-| Pino | 615,333 | 1,625 |
-| Bunyan | 228,430 | 4,378 |
-| Winston | 201,617 | 4,960 |
-| Log4js | 32,881 | 30,413 |
+| **Zario** | **3,968,123** | **252** |
+| Pino | 230,902 | 4,331 |
+| Bunyan | 168,165 | 5,947 |
+| Winston | 133,166 | 7,509 |
+| Log4js | 137,313 | 7,283 |
 
 ### Child Logger
 *Test: `child.info("Request handled")`*
 
 | Library | ops/sec | ns/op |
 |---------|---------|-------|
-| **Zario** | **1,394,318** | **717** |
-| Pino | 470,311 | 2,126 |
-| Winston | 146,196 | 6,840 |
-| Bunyan | 119,293 | 8,383 |
+| **Zario** | **3,317,270** | **301** |
+| Winston | 257,385 | 3,885 |
+| Pino | 236,269 | 4,232 |
+| Bunyan | 190,315 | 5,254 |
 
 ### Filtered Logs
 *Test: `logger.debug` when level is set to `info` (log is skipped)*
 
 | Library | ops/sec | ns/op |
 |---------|---------|-------|
-| Pino | 22,737,613 | 44 |
-| Bunyan | 6,705,343 | 149 |
-| **Zario** | **3,206,053** | **312** |
-| Log4js | 1,943,461 | 515 |
-| Winston | 436,322 | 2,292 |
+| **Zario** | **94,656,364** | **11** |
+| Pino | 94,299,145 | 11 |
+| Bunyan | 9,784,512 | 102 |
+| Log4js | 2,986,302 | 335 |
+| Winston | 627,424 | 1,594 |
 
 ### Deep Nested Metadata
 *Test: Logging objects with multiple levels of nesting*
 
 | Library | ops/sec | ns/op |
 |---------|---------|-------|
-| **Zario** | **2,461,337** | **406** |
-| Pino | 239,021 | 4,184 |
-| Bunyan | 81,530 | 12,265 |
-| Winston | 72,745 | 13,747 |
-| Log4js | 15,381 | 65,015 |
+| **Zario** | **3,433,850** | **291** |
+| Winston | 143,122 | 6,987 |
+| Pino | 93,766 | 10,665 |
+| Bunyan | 106,448 | 9,394 |
+| Log4js | 63,028 | 15,866 |
 
 ### Error Logging
-*Test: `logger.error(new Error("Failure"))`*
+*Test: `logger.error("msg", { error })`*
 
 | Library | ops/sec | ns/op |
 |---------|---------|-------|
-| **Zario** | **1,846,615** | **542** |
-| Winston | 165,317 | 6,049 |
-| Bunyan | 127,400 | 7,849 |
-| Pino | 117,557 | 8,507 |
-| Log4js | 38,538 | 25,948 |
+| **Zario** | **2,968,153** | **337** |
+| Bunyan | 245,550 | 4,072 |
+| Winston | 189,005 | 5,291 |
+| Pino | 127,733 | 7,829 |
+| Log4js | 118,795 | 8,418 |
 
 ### High-Frequency Burst
 *Test: Processing a burst of 100,000 logs*
 
-| Library | ops/sec | ns/op |
-|---------|---------|-------|
-| **Zario** | **3,762,563** | **266** |
-| Pino | 774,661 | 1,291 |
-| Winston | 234,698 | 4,261 |
-| Bunyan | 144,089 | 6,939 |
-| Log4js | 96,777 | 10,333 |
+| Library | Time (ms) | logs/sec |
+|---------|-----------|----------|
+| **Zario** | **13.79** | **7,252,995** |
+| Winston | 224.95 | 444,534 |
+| Bunyan | 337.71 | 296,112 |
+| Pino | 371.47 | 269,200 |
+| Log4js | 394.60 | 253,420 |
 
 ## Analysis and Insights
 
-- **Overall Performance**: Zario is the fastest library for actual logging operations, including simple messages, metadata enrichment, child loggers, and error handling.
-- **Child Loggers**: Zario's child loggers are significantly more efficient, performing **3x faster than Pino** and **10x faster than Winston**. This makes Zario ideal for request-tracing in complex microservices.
-- **Burst Handling**: Zario handles high-frequency bursts **4.9x faster than Pino**, thanks to its optimized asynchronous pipeline and minimal object allocation.
-- **Filtered Logs**: Pino leads in the filtered logs category (where logging is disabled for a specific level) due to its use of numeric level comparisons versus Zario's current internal lookup. However, Zario still maintains a high throughput of over 3 million ops/sec in this scenario.
-- **Deep Metadata**: Zario excels at handling deeply nested objects, outperforming Pino by over **10x** in this specific test.
+- **Zario leads in every scenario.** After recent hot-path optimizations, Zario now outperforms all compared libraries across all test categories — including the filtered-logs case, where it ties with pino at 11 ns/op.
+- **Filtered logs:** Previously the weakest area (312 ns/op), now at 11 ns/op — matching pino's performance by using noop method stubs for disabled log levels.
+- **Child loggers:** 11× faster than pino, making Zario ideal for request-scoped tracing in microservices.
+- **Deep metadata:** 36× faster than pino thanks to efficient serialization without intermediate object allocation.
+- **High-frequency burst:** 27× faster than pino (13.79 ms vs 371 ms for 100,000 logs).
 
 ## Caveats and Notes
 
