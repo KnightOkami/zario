@@ -3,18 +3,20 @@ name: Release
 on:
   workflow_dispatch:
     inputs:
-      version:
-        description: "Version bump type (patch, minor, major)"
+      bump:
+        description: "Version bump (patch, minor, major, or 'none' to use current)"
         required: true
         type: choice
         options:
           - patch
           - minor
           - major
+          - none
         default: patch
 
 permissions:
   contents: write
+  packages: write
 
 concurrency:
   group: release-${{ github.ref }}
@@ -22,7 +24,7 @@ concurrency:
 
 jobs:
   release:
-    name: Bump, Tag, Publish, Release
+    name: Release
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -56,10 +58,29 @@ jobs:
       - name: Bump version
         id: bump
         run: |
-          npm version ${{ github.event.inputs.version }} -m "release: v%s"
-          echo "NEW_VERSION=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+          CURRENT=$(node -p "require('./package.json').version")
+          echo "Current version: $CURRENT"
 
-      - name: Push tag
+          if [ "${{ github.event.inputs.bump }}" = "none" ]; then
+            NEW_VERSION="$CURRENT"
+            echo "Using current version: $NEW_VERSION"
+          else
+            npm version ${{ github.event.inputs.bump }} --no-git-tag-version
+            NEW_VERSION=$(node -p "require('./package.json').version")
+            echo "Bumped to: $NEW_VERSION"
+          fi
+
+          echo "NEW_VERSION=$NEW_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Create tag and commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add package.json
+          git commit -m "release: v${{ steps.bump.outputs.NEW_VERSION }}"
+          git tag -a "v${{ steps.bump.outputs.NEW_VERSION }}" -m "v${{ steps.bump.outputs.NEW_VERSION }}"
+
+      - name: Push
         run: git push origin main --follow-tags
 
       - name: Publish to npm
